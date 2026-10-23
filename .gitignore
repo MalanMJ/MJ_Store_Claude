@@ -1,0 +1,5 @@
+# internal stock counts: keep out of the repo
+data/inventory.csv
+.DS_Store
+node_modules/
+*.zip
