@@ -10,6 +10,7 @@ import { hasBackend, supabase } from "./lib/supabase";
 
 type CartLine = { sku: string; quantity: number };
 const categoryList = Object.entries(categoryLabels).filter(([slug]) => slug !== "all");
+const checkoutEnabled = import.meta.env.VITE_CHECKOUT_ENABLED === "true";
 const readCart = (): CartLine[] => {
   try { return JSON.parse(localStorage.getItem("mj-cart") || "[]") as CartLine[]; } catch { return []; }
 };
@@ -117,7 +118,7 @@ function App() {
   };
   const startCheckout = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!supabase || !cartItems.length) { setNotice("Secure checkout is being connected. Please check back soon."); return; }
+    if (!supabase || !checkoutEnabled || !cartItems.length) { setNotice("Online checkout isn’t live yet. Email Joe if you need a hand."); return; }
     setCheckingOut(true);
     setNotice("");
     const { data, error } = await supabase.functions.invoke("create-checkout-session", {
@@ -134,7 +135,7 @@ function App() {
   if (parsedRoute === "/admin" || parsedRoute.startsWith("/admin/")) return <Admin />;
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${checkoutEnabled && hasBackend ? "checkout-ready" : ""}`}>
       <div className="announcement"><span>Good gear, fair prices, Canada wide.</span><a href="#/about">Meet your phone guy <ArrowRight size={13} /></a></div>
       <header className="site-header">
         <button className="mobile-menu-button icon-button" aria-label="Open menu" onClick={() => setMobileMenu(!mobileMenu)}>{mobileMenu ? <X /> : <Menu />}</button>

@@ -14,9 +14,23 @@ Without credentials the storefront runs from its bundled catalog with a local sh
 ```dotenv
 VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 VITE_SUPABASE_ANON_KEY=YOUR_PUBLIC_ANON_KEY
+VITE_CHECKOUT_ENABLED=false
 ```
 
 The public anon key is safe to use in the storefront because table access is controlled by row-level security. Never put the Supabase service role key or Stripe secret key in a `VITE_` variable or in client code.
+
+## Deploy to Vercel
+
+1. Push this project to a GitHub repository. Keep `.env.local` and `data/inventory.csv` out of the repository; `.gitignore` excludes both.
+2. In Vercel, choose **Add New → Project**, connect GitHub, and import the store repository.
+3. Vercel detects Vite. Confirm the build command is `npm run build` and the output directory is `dist`.
+4. Add these project environment variables for **Production** and **Preview**:
+   - `VITE_SUPABASE_URL` — your Supabase project URL.
+   - `VITE_SUPABASE_ANON_KEY` — your Supabase public anon/publishable key.
+   - `VITE_CHECKOUT_ENABLED` — `false` until Stripe Checkout and its webhook are configured.
+5. Choose **Deploy**. Vercel provides a `*.vercel.app` URL. Add that URL to Supabase **Authentication → URL Configuration → Redirect URLs** so the admin account can sign in on the hosted site.
+
+You can deploy the catalog before creating a Stripe account. Customers can browse and add items to their bag; the checkout panel tells them online payments are not live yet and gives them Joe’s contact email. Once Stripe is configured and both Supabase Edge Functions are deployed, change `VITE_CHECKOUT_ENABLED` to `true` in Vercel and redeploy. Vite environment values are included at build time, so changing them requires a new deployment. Do not add Supabase service-role or Stripe secret keys to Vercel variables prefixed with `VITE_`.
 
 ## Phase 1 — React + TypeScript + Vite
 
