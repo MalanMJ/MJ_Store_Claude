@@ -133,17 +133,6 @@ h3 a{color:inherit;text-decoration:none}h3 a:hover{text-decoration:underline}a.i
 
 </main>
 
-<main id="dsm" hidden><section class="w" id="ds"><h2>Design system</h2><p class="mu" style="margin:-8px 0 20px;max-width:60ch">Liquid Glass tokens and the components built on them. Use the theme toggle above to see them respond.</p>
-<div class="gd">
-<div class="g pd"><h3>Glass tokens</h3><ul class="tk"><li><code>--glass-blur</code> blur(20px) saturate(180%)</li><li><code>--r</code> 24px, hero 28px, pills 999px</li><li><code>--ed</code> 1px inner highlight edge</li><li><code>--sh</code> layered soft shadow</li><li>Three themes from the logo: white, black and yellow. Switch with ◐ in the nav.</li><li><code>--br</code> buttons: yellow with black text, inverted on the yellow theme</li><li>Prices, stock and buttons sit on solid <code>--so</code></li></ul>
-<div class="row"><span class="lo"><svg width="174" height="26" aria-hidden="true"><use href="#logo"/></svg></span><span class="ai"><svg aria-hidden="true"><use href="#mark"/></svg></span></div><div class="sw" role="img" aria-label="Colour swatches: ink, brand, background, glow, solid"><i style="background:var(--ink)"></i><i style="background:var(--br)"></i><i style="background:var(--bg1)"></i><i style="background:var(--b2)"></i><i style="background:var(--so)"></i></div></div>
-<div class="g pd"><h3>Buttons and badges</h3><div class="row"><button class="bt p" type="button">Add to cart</button><button class="bt gl" type="button">Compare</button></div><div class="row"><span class="bd">New</span><span class="bd">Like New</span><span class="bd ok">In stock</span><span class="bd wn">Out of stock</span></div>
-<h3>Modal and sheet</h3><div class="row"><button class="bt gl" id="od" type="button">Open modal</button><button class="bt gl" data-o type="button">Open cart sheet</button></div></div>
-<div class="g pd"><h3>Filter panel</h3><fieldset><legend>Condition</legend><label class="chip"><input type="checkbox" checked>New</label><label class="chip"><input type="checkbox" checked>Like New</label><label class="chip"><input type="checkbox">Good</label></fieldset>
-<label for="rg">Max price: <output id="po"></output></label><input id="rg" type="range" min="100" max="1500" step="50" value="800"><button class="bt p" type="button">Apply filters</button></div>
-</div></section>
-</main>
-
 <main id="about" hidden>
 <div class="w hero"><div><h1>About Mobile Joe</h1><p class="mu">We’re an online store for phones, tablets and accessories, shipping across Canada.</p><div class="row"><a class="bt p" href="#/store">Visit MJ Store</a><a class="bt gl" href="#/shop/all">Browse all products</a></div></div>
 <div class="hv g" role="img" aria-label="The Mobile Joe logo mark"><svg aria-hidden="true" style="width:42%;height:auto;aspect-ratio:302/262;color:#fdcc00"><use href="#mark"/></svg></div></div>
@@ -171,7 +160,7 @@ h3 a{color:inherit;text-decoration:none}h3 a:hover{text-decoration:underline}a.i
 <main id="co" hidden><div class="w" id="cw"></div></main>
 
 <footer class="w ft"><a class="lo" href="#top" aria-label="Mobile Joe home"><svg width="174" height="26" aria-hidden="true"><use href="#logo"/></svg></a>
-<nav aria-label="Footer"><a href="#/about">About us</a><a href="#/store">MJ Store</a><a href="#/design">Design system</a><a href="#top">FAQ</a><a href="#top">Returns and warranty</a><a href="#top">Track an order</a><a href="#top">Contact</a><a href="#top">Privacy policy</a></nav>
+<nav aria-label="Footer"><a href="#/about">About us</a><a href="#/store">MJ Store</a><a href="#top">FAQ</a><a href="#top">Returns and warranty</a><a href="#top">Track an order</a><a href="#top">Contact</a><a href="#top">Privacy policy</a></nav>
 <p class="mu">© 2026 Mobile Joe. Shipping across Canada.</p></footer>
 
 <div id="ov" hidden></div>
@@ -270,7 +259,7 @@ document.title=p.n+" | Mobile Joe";upd()}
 $("#pd").addEventListener("input",e=>{const t=e.target;if(t.type==="radio"){X.sel[t.name]=t.value;let v=X.p.v.find(x=>Object.keys(X.sel).every(k=>x.a[k]===X.sel[k]));if(!v){v=X.p.v.find(x=>x.a[t.name]===t.value);X.sel={...v.a};$$("#pd input[type=radio]").forEach(r=>r.checked=X.sel[r.name]===r.value)}X.v=v;upd()}else if(t.id==="cd"){const d=DEVS[+t.value];$("#cr").textContent=d?(fits(X.v.f||X.p.f,d[1])?"✓ This works with "+d[0]+((X.v.f||X.p.f)==="P"?". Pair it with a cable that fits your device.":"."):"✗ This doesn’t fit "+d[0]+"."):""}});
 $("#pd").addEventListener("click",e=>{const t=e.target.closest("button");if(!t)return;if(t.id==="ab")atc();else if(t.dataset.n){const i=t.querySelector("img"),g=$("#bg");if(i){g.querySelector("img")?.remove();g.insertAdjacentHTML("beforeend",`<img src="${i.src}" alt="">`)}}});
 $("#sa").onclick=atc;
-const shop=$("#shop"),pdp=$("#pdp"),sbar=$("#sbar"),store=$("#store"),dsm=$("#dsm"),rt2=()=>{const m=location.hash.match(/^#\/(store|shop|product|design)\/?([^?]*)/),r=m&&m[1];store.hidden=r!=="store";shop.hidden=r!=="shop";pdp.hidden=sbar.hidden=r!=="product";dsm.hidden=r!=="design";if(!m)return;hm.hidden=ab.hidden=true;scrollTo(0,0);if(r==="store")document.title="MJ Store | Mobile Joe";else if(r==="design")document.title="Design system | Mobile Joe";else if(r==="shop"){F.cat=CN.hasOwnProperty(m[2])?m[2]:"all";if(F.go)F.go=0;else F.q="";$("#fl").open=matchMedia("(min-width:900px)").matches;cf()}else rp(m[2])};
+const shop=$("#shop"),pdp=$("#pdp"),sbar=$("#sbar"),store=$("#store"),rt2=()=>{const m=location.hash.match(/^#\/(store|shop|product)\/?([^?]*)/),r=m&&m[1];store.hidden=r!=="store";shop.hidden=r!=="shop";pdp.hidden=sbar.hidden=r!=="product";if(!m)return;hm.hidden=ab.hidden=true;scrollTo(0,0);if(r==="store")document.title="MJ Store | Mobile Joe";else if(r==="shop"){F.cat=CN.hasOwnProperty(m[2])?m[2]:"all";if(F.go)F.go=0;else F.q="";$("#fl").open=matchMedia("(min-width:900px)").matches;cf()}else rp(m[2])};
 addEventListener("hashchange",rt2);rst();rt2();
 const CAR="Alberta:AB:5:GST,British Columbia:BC:12:GST + PST,Manitoba:MB:12:GST + RST,New Brunswick:NB:15:HST,Newfoundland and Labrador:NL:15:HST,Nova Scotia:NS:14:HST,Northwest Territories:NT:5:GST,Nunavut:NU:5:GST,Ontario:ON:13:HST,Prince Edward Island:PE:15:HST,Quebec:QC:14.975:GST + QST,Saskatchewan:SK:11:GST + PST,Yukon:YT:5:GST";
 const REG={CA:CAR.split(",").map(s=>s.split(":"))},SHIP=[["Standard","5 to 8 business days (estimate)",10,8],["Express","2 to 3 business days (estimate)",25,19]],K={ship:0,country:"CA",region:""};
