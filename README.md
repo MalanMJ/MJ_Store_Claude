@@ -9,6 +9,16 @@ npm install
 npm run dev
 ```
 
+## Download catalog product images
+
+Image URLs in `src/data/catalog.json` are saved to variant SKU folders under `images/products/`. Run this from the project root in Windows PowerShell:
+
+```powershell
+.\tools\download-catalog-images.ps1
+```
+
+If script execution is disabled, run it once through PowerShell with `powershell -ExecutionPolicy Bypass -File .\tools\download-catalog-images.ps1`. The script creates missing folders, numbers multiple images `1`, `2`, etc., and skips files already downloaded. Use `.\tools\download-catalog-images.ps1 -Force` to replace existing numbered images. Vite includes local image files in the production build; the storefront uses image `1` if a Supabase image URL is not set. Check that you have permission to use the linked images in your store.
+
 Without credentials the storefront runs from its bundled catalog with a local shopping bag. Checkout and admin screens show their setup state. Make a `.env.local` from `.env.example` when connecting a backend:
 
 ```dotenv
@@ -36,7 +46,7 @@ You can deploy the catalog before creating a Stripe account. Customers can brows
 
 - Responsive storefront, product categories, search, product pages, variant selection, cart and local persistence.
 - The catalog moved from `catalog.js` to `src/data/catalog.json`.
-- Add product image files later in Supabase Storage from the admin Inventory tab. Until then, category based product illustrations are shown.
+- Product photos can be downloaded from the catalog into `images/products/<sku>/` with the script above, or uploaded to Supabase Storage from the admin Inventory tab. Until photos are available, category based product illustrations are shown.
 - Without a populated backend, the storefront uses its bundled catalog.
 
 ## Phase 2 — Supabase database, auth and storage
