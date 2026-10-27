@@ -1,25 +1,87 @@
 # Mobile Joe store
 
-Direct-to-customer storefront for Mobile Joe. Canada only, prices in CAD. Accessories for now; phones to follow.
+Customer storefront and store admin for Mobile Joe, built with React, TypeScript and Vite. The catalog contains the existing 18 accessories and uses designed placeholders until product photos are ready. Prices are in CAD; the store is set up for Canada-wide checkout.
 
-## Run it
-Open `index.html` in a browser, or upload this folder to any static host. There is no build step.
+## Run the storefront
 
-## Product images
-Each SKU has its own folder: `images/products/<sku>/` (lowercase SKU, folders already created).
-Add files as `1.webp` (main image), `2.webp`, `3.webp`, `4.webp`. `.jpg`, `.jpeg` and `.png` also work.
-No code changes needed. Missing images fall back to a placeholder.
-Recommended: square, at least 1200 x 1200 px, plain white or transparent background, under 300 KB each (WebP preferred).
-In the Supabase build this layout becomes a Storage bucket (`product-images/<sku>/1.webp`).
+```sh
+npm install
+npm run dev
+```
 
-## SKUs and renaming
-SKUs come from the inventory sheet's ITEM text (uppercased, symbols replaced by hyphens) and never change.
-Rename products in `catalog.js` (field `n`). The URL slug (`s`) is stored separately so renaming does not break links.
+Without credentials the storefront runs from its bundled catalog with a local shopping bag. Checkout and admin screens show their setup state. Make a `.env.local` from `.env.example` when connecting a backend:
 
-## Data
-- `catalog.js`: what customers see. It holds no stock quantities, only in stock or out of stock.
-- `data/inventory.csv`: internal quantities and prices. It is listed in `.gitignore` so it is never published.
-- `data/image-sources.csv`: Newegg listing and image for each SKU (`use`, `review` or `missing`). `tools/download-images.py` can save the `use` images into the SKU folders.
+```dotenv
+VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+VITE_SUPABASE_ANON_KEY=YOUR_PUBLIC_ANON_KEY
+```
 
-## Roadmap
-React + TypeScript + Vite port, Supabase (database, auth, storage), Stripe payments, admin area, marketplace stock sync.
+The public anon key is safe to use in the storefront because table access is controlled by row-level security. Never put the Supabase service role key or Stripe secret key in a `VITE_` variable or in client code.
+
+## Phase 1 — React + TypeScript + Vite
+
+- Responsive storefront, product categories, search, product pages, variant selection, cart and local persistence.
+- The catalog moved from `catalog.js` to `src/data/catalog.json`.
+- Add product image files later in Supabase Storage from the admin Inventory tab. Until then, category based product illustrations are shown.
+- Without a populated backend, the storefront uses its bundled catalog.
+
+## Phase 2 — Supabase database, auth and storage
+
+1. Create a Supabase project and install the Supabase CLI.
+2. Link this folder and apply the schema:
+
+   ```sh
+   supabase link --project-ref YOUR_PROJECT_REF
+   supabase db push
+   ```
+
+3. Copy `.env.example` to `.env.local` and set the project URL and anon key.
+4. Start the site, open `#/admin`, sign in with a Supabase Auth email/password account, and promote the account in the Supabase SQL editor:
+
+   ```sql
+   insert into public.admin_users(user_id)
+   select id from auth.users where email = 'joe@example.com';
+   ```
+
+5. In Admin → Overview, import the storefront catalog. In Admin → Inventory, upload the private `data/inventory.csv` stock sheet to load exact quantities. The import understands the `sku` and `qty_internal_only` column names. Keep that source file private; it is ignored by git and is never bundled into the website.
+
+Supabase stores public product details and variant prices in `products` / `product_variants`. Exact quantities and reservations live in the admin-only `inventory` table. Public users can see whether a variant is in stock, never its quantity. Product photos use the public `product-images` bucket; uploads are admin-only.
+
+## Phase 3 — Stripe payments
+
+Set Edge Function secrets in Supabase:
+
+```sh
+supabase secrets set STRIPE_SECRET_KEY=sk_live_... STRIPE_WEBHOOK_SECRET=whsec_... SITE_URL=https://YOUR_STORE_DOMAIN
+```
+
+Deploy both functions:
+
+```sh
+supabase functions deploy create-checkout-session
+supabase functions deploy stripe-webhook
+```
+
+In the Stripe Dashboard, add a webhook endpoint at `https://YOUR_PROJECT.supabase.co/functions/v1/stripe-webhook` for:
+
+- `checkout.session.completed`
+- `checkout.session.expired`
+- `checkout.session.async_payment_succeeded`
+- `checkout.session.async_payment_failed`
+
+The checkout function reads prices and inventory from Supabase, reserves stock before redirecting to Stripe Checkout, restricts shipping to Canada, offers the existing $10 standard and $25 express shipping options, and enables Stripe Tax. The signed webhook completes paid orders and releases reservations when checkout expires. Configure Stripe tax registrations and confirm rates, shipping fees, delivery estimates and the live/test mode in the Stripe account before accepting live orders.
+
+## Phase 4 — Admin area
+
+The `#/admin` area is protected by Supabase Auth and the `admin_users` allowlist. It includes stock editing, private CSV stock imports, catalog initialization, product image uploads, order review and fulfillment status, and inventory export. Customers do not receive access to the inventory table or admin records.
+
+## Phase 5 — Marketplace stock sync
+
+Admin → Marketplace sync supports a CSV export/import flow now. Export `sku,quantity` for marketplace listings. Import a marketplace snapshot with a SKU column and one of `quantity`, `qty`, `stock` or `available`; matched counts update the store stock and marketplace comparison record. Unmatched SKUs are skipped. A provider-specific API connection can be added once the marketplaces and their credentials are selected; they are not identified in the current roadmap.
+
+## Build
+
+```sh
+npm run build
+npm run preview
+```

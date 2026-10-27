@@ -3,3 +3,11 @@ data/inventory.csv
 .DS_Store
 node_modules/
 *.zip
+.env
+.env.*
+!.env.example
+dist/
+.vercel/
+.netlify/
+supabase/.temp/
+*.tsbuildinfo
