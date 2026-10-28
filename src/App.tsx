@@ -152,7 +152,7 @@ function App() {
     window.location.assign(data.url as string);
   };
 
-  const title = product ? product.name : parsedRoute.startsWith("/shop") ? `${categoryLabels[shopCategory] ?? "Shop"} | Mobile Joe` : "Mobile Joe — Phone stuff, sorted.";
+  const title = "Mobile Joe";
   useEffect(() => { document.title = title; }, [title]);
 
   if (parsedRoute === "/admin" || parsedRoute.startsWith("/admin/")) return <Admin />;

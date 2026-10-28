@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" role="img" aria-labelledby="title">
+  <title id="title">Mobile Joe</title>
+  <rect width="80" height="80" rx="16" fill="#f3c900"/>
+  <path fill="#191a16" d="M4 70 30 22l26 48H4Zm31-56 39 56h-9L29 27l6-13Z"/>
+</svg>
