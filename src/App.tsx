@@ -14,6 +14,13 @@ import { hasBackend, supabase } from "./lib/supabase";
 
 type CartLine = { sku: string; quantity: number };
 const categoryList = Object.entries(categoryLabels).filter(([slug]) => slug !== "all");
+type Marketplace = "Newegg" | "Best Buy" | "Walmart" | "Reebelo";
+const marketplaceStoreLinks: Record<Marketplace, { href: string; label: string }> = {
+  Newegg: { href: "https://www.newegg.ca/Seller-Store/Mobile-Joe", label: "Mobile Joe seller store on Newegg" },
+  "Best Buy": { href: "https://www.bestbuy.ca/en-ca/seller/691425", label: "Mobile Joe seller page on Best Buy" },
+  Walmart: { href: "https://www.walmart.ca/", label: "Walmart Canada homepage" },
+  Reebelo: { href: "https://reebelo.ca/", label: "Reebelo Canada homepage" },
+};
 const checkoutEnabled = import.meta.env.VITE_CHECKOUT_ENABLED === "true";
 const readCart = (): CartLine[] => {
   try { return JSON.parse(localStorage.getItem("mj-cart") || "[]") as CartLine[]; } catch { return []; }
@@ -58,27 +65,29 @@ function ProductCard({ product, onAdd }: { product: Product; onAdd: (product: Pr
   );
 }
 
-function MarketplaceMark({ site }: { site: "Newegg" | "Best Buy" | "Walmart" | "Reebelo" }) {
+function MarketplaceMark({ site }: { site: Marketplace }) {
   return <span className={`marketplace-mark marketplace-mark--${site.toLowerCase().replaceAll(" ", "-")}`} role="img" aria-label={`${site} logo`}>
     {site === "Newegg" ? <>new<span>egg</span></> : site === "Best Buy" ? <><b>BEST</b><b>BUY</b></> : site === "Walmart" ? <>Walmart<i>✳</i></> : "reebelo"}
   </span>;
 }
 
-function MarketplaceGauge({ site, rating, description }: { site: "Newegg" | "Best Buy" | "Walmart" | "Reebelo"; rating: number; description: string }) {
+function MarketplaceGauge({ site, rating, description }: { site: Marketplace; rating: number; description: string }) {
   const gaugeStyle = {
     "--gauge-angle": `${rating / 5 * 180}deg`,
     "--needle-angle": `${rating / 5 * 180 - 90}deg`,
   } as CSSProperties;
-  return <article className="marketplace-gauge">
+  const destination = marketplaceStoreLinks[site];
+  return <a className="marketplace-gauge" href={destination.href} target="_blank" rel="noopener noreferrer"
+    aria-label={"Visit " + destination.label + " (opens in a new tab). Rating " + rating.toFixed(1) + " out of 5."}>
+    <ArrowUpRight className="marketplace-gauge__external-icon" size={14} aria-hidden="true" />
     <MarketplaceMark site={site} />
     <div className="rating-speedometer" role="img" aria-label={`${site}: ${rating.toFixed(1)} out of 5`}>
       <div className="rating-speedometer__dial" style={gaugeStyle}><span className="rating-speedometer__needle" /><i className="rating-speedometer__hub" /></div>
       <div className="rating-speedometer__value"><strong>{rating.toFixed(1)}</strong><small> / 5</small></div>
     </div>
     <p>{description}</p>
-  </article>;
+  </a>;
 }
-
 function App() {
   const [catalog, setCatalog] = useState<Product[]>(localCatalogProducts);
   const [route, setRoute] = useState(pathNow);
