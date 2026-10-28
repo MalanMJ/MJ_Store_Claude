@@ -1,6 +1,6 @@
 # Mobile Joe store
 
-Customer storefront and store admin for Mobile Joe, built with React, TypeScript and Vite. The catalog contains the existing 18 accessories and uses designed placeholders until product photos are ready. Prices are in CAD; the store is set up for Canada-wide checkout.
+Customer storefront and store admin for Mobile Joe, built with React, TypeScript and Vite. The catalog contains 18 phone and accessory products with local photos where available; category illustrations serve as fallbacks. Prices are in CAD; the store is set up for Canada-wide checkout.
 
 ## Run the storefront
 
@@ -46,7 +46,7 @@ You can deploy the catalog before creating a Stripe account. Customers can brows
 
 - Responsive storefront, product categories, search, product pages, variant selection, cart and local persistence.
 - The catalog moved from `catalog.js` to `src/data/catalog.json`.
-- Product photos can be downloaded from the catalog into `images/products/<sku>/` with the script above, or uploaded to Supabase Storage from the admin Inventory tab. Until photos are available, category based product illustrations are shown.
+- Product photos can be downloaded from the catalog into `images/products/<sku>/` with the script above, or uploaded to Supabase Storage from the admin Inventory tab. Category-based product illustrations remain as a fallback when a photo is unavailable.
 - Without a populated backend, the storefront uses its bundled catalog.
 
 ## Phase 2 — Supabase database, auth and storage

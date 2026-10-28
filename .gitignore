@@ -1,11 +1,35 @@
-# internal stock counts: keep out of the repo
+# Internal stock counts and exports
 data/inventory.csv
+data/*inventory*.csv
+
+# Local environment secrets (keep the placeholder template shareable)
+.env
+.env.*
+!.env.example
+
+# Local credentials and private key material
+.npmrc
+.netrc
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+**/credentials*.json
+**/*service-account*.json
+
+# Local database files and infrastructure state
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.backup
+*.tfstate
+*.tfstate.*
+
 .DS_Store
 node_modules/
 *.zip
-.env
-.env.*
-.env.example
 dist/
 .vercel/
 .netlify/

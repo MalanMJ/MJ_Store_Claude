@@ -8,7 +8,7 @@ import { Admin } from "./components/Admin";
 import homeHero from "../images/hero-warehouse.jpg";
 import mobileJoeLogo from "../images/mobile-joe-logo.svg";
 import mobileJoeFooterLogo from "../images/mobile-joe-logo-footer.svg";
-import teamworkImage from "../Teamwork image.avif";
+import teamworkImage from "../images/about-teamwork.avif";
 import { categoryLabels, loadCatalog, localCatalogProducts, money, type Product, type Variant } from "./lib/catalog";
 import { hasBackend, supabase } from "./lib/supabase";
 
