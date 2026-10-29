@@ -1,30 +1,30 @@
 sku,product,status,listing_url,image_url,note
-APPLE-20W-ADAPTER,Apple 20W USB-C Power Adapter,use,https://www.newegg.ca/p/359-000G-00139?Item=9SIAZBTKB36855,https://c1.neweggimages.com/productimage/nb300/AZBTS240523130ZOWCF.jpg,Exact match (refurbished listing)
-APPLE-MAGSAFE,Apple MagSafe Charger,use,https://www.newegg.ca/apple-mhxh3am-a/p/13B-007V-001M1?Item=9SIAZBTKF37003,https://c1.neweggimages.com/productimage/nb300/AZBTS2501221452GN5C.jpg,Listing is the refurbished MHXH3AM/A 1 m; confirm it matches your stock
-APPLE-USB-A-L-1M,Apple USB-A to Lightning Cable,use,https://www.newegg.ca/p/0S8-003T-009T2?Item=9SIAZBTKBJ0887,https://c1.neweggimages.com/productimage/nb300/AZBTS2406200X0CGV3C.jpg,Exact match (refurbished listing)
-APPLE-USB-C-L-1M,Apple USB-C to Lightning Cable,use,https://www.newegg.ca/p/0S8-003T-009T1?Item=9SIAZBTKBJ0822,https://c1.neweggimages.com/productimage/nb300/AZBTS2406200WREZQFB.jpg,Exact match (refurbished listing)
-SAM-25W-ADAPTER-BLACK,Samsung 25W Wall Charger,use,https://www.newegg.ca/p/359-000V-00RR8?Item=9SIAZBTKAV5558,https://c1.neweggimages.com/productimage/nb300/AZBTS2405071680D56F.jpg,Exact match
-SAM-25W-ADAPTER-WHITE,Samsung 25W Wall Charger,use,https://www.newegg.ca/p/359-000V-00RS8?Item=9SIAZBTKBJ0928,https://c1.neweggimages.com/productimage/nb300/AZBTS2406200YG762B8.jpg,Exact match
-SAM-3-5-AKG-BLACK,Samsung AKG Earphones (3.5 mm),use,https://www.newegg.ca/p/0SD-0005-001Z7?Item=9SIAZBTKBJ1347,https://c1.neweggimages.com/productimage/nb300/AZBTS24062012RF2FB2.jpg,Listing does not state the colour; confirm it is the black pair
-SAM-TYPE-C-AKG-WHITE,Samsung AKG USB-C Earphones,use,https://www.newegg.ca/p/0SD-0005-001Z6?Item=9SIAZBTKAZ2462,https://c1.neweggimages.com/productimage/nb300/AZBTS24051316V8V5B1.jpg,Exact match
-SAM-USB-C-C-1M-BLACK,Samsung USB-C to USB-C Cable,use,https://www.newegg.ca/p/0S8-0001-01CK3?Item=9SIAZBTKB37294,https://c1.neweggimages.com/productimage/nb300/AZBTS240523166K9828.jpg,Exact match
-SAM-45W-ADAPTER,Samsung 45W Power Adapter,review,https://www.newegg.ca/p/359-000V-00RR7?Item=9SIAZBTKAV5535,https://c1.neweggimages.com/productimage/nb300/AZBTS240507158Z70B6.jpg,Listing bundles a 6 ft cable; photo may show it
-SAM-TA20-BLACK-15W,Samsung 15W Fast Wall Charger,review,https://www.newegg.ca/p/359-000V-00RS6?Item=9SIAZBTKBG7395,https://c1.neweggimages.com/productimage/nb300/AZBTS240617149V4UA0.jpg,Adapter plus USB-C cable bundle
+2426438,Apple 20W USB-C Power Adapter,use,https://www.newegg.ca/p/359-000G-00139?Item=9SIAZBTKB36855,https://c1.neweggimages.com/productimage/nb300/AZBTS240523130ZOWCF.jpg,Exact match (refurbished listing)
+2429568,Apple MagSafe Charger,use,https://www.newegg.ca/apple-mhxh3am-a/p/13B-007V-001M1?Item=9SIAZBTKF37003,https://c1.neweggimages.com/productimage/nb300/AZBTS2501221452GN5C.jpg,Listing is the refurbished MHXH3AM/A 1 m; confirm it matches your stock
+2427953,Apple USB-A to Lightning Cable,use,https://www.newegg.ca/p/0S8-003T-009T2?Item=9SIAZBTKBJ0887,https://c1.neweggimages.com/productimage/nb300/AZBTS2406200X0CGV3C.jpg,Exact match (refurbished listing)
+2427751,Apple USB-C to Lightning Cable,use,https://www.newegg.ca/p/0S8-003T-009T1?Item=9SIAZBTKBJ0822,https://c1.neweggimages.com/productimage/nb300/AZBTS2406200WREZQFB.jpg,Exact match (refurbished listing)
+2428357,Samsung 25W Wall Charger,use,https://www.newegg.ca/p/359-000V-00RR8?Item=9SIAZBTKAV5558,https://c1.neweggimages.com/productimage/nb300/AZBTS2405071680D56F.jpg,Exact match
+2426842,Samsung 25W Wall Charger,use,https://www.newegg.ca/p/359-000V-00RS8?Item=9SIAZBTKBJ0928,https://c1.neweggimages.com/productimage/nb300/AZBTS2406200YG762B8.jpg,Exact match
+2427549,Samsung AKG Earphones (3.5 mm),use,https://www.newegg.ca/p/0SD-0005-001Z7?Item=9SIAZBTKBJ1347,https://c1.neweggimages.com/productimage/nb300/AZBTS24062012RF2FB2.jpg,Listing does not state the colour; confirm it is the black pair
+2426539,Samsung AKG USB-C Earphones,use,https://www.newegg.ca/p/0SD-0005-001Z6?Item=9SIAZBTKAZ2462,https://c1.neweggimages.com/productimage/nb300/AZBTS24051316V8V5B1.jpg,Exact match
+2428256,Samsung USB-C to USB-C Cable,use,https://www.newegg.ca/p/0S8-0001-01CK3?Item=9SIAZBTKB37294,https://c1.neweggimages.com/productimage/nb300/AZBTS240523166K9828.jpg,Exact match
+2430678,Samsung 45W Power Adapter,review,https://www.newegg.ca/p/359-000V-00RR7?Item=9SIAZBTKAV5535,https://c1.neweggimages.com/productimage/nb300/AZBTS240507158Z70B6.jpg,Listing bundles a 6 ft cable; photo may show it
+2428458,Samsung 15W Fast Wall Charger,review,https://www.newegg.ca/p/359-000V-00RS6?Item=9SIAZBTKBG7395,https://c1.neweggimages.com/productimage/nb300/AZBTS240617149V4UA0.jpg,Adapter plus USB-C cable bundle
 SAM-USB-C-C-1M-WHITE,Samsung USB-C to USB-C Cable,review,https://www.newegg.ca/p/0S8-0001-01CK5?Item=9SIAZBTKB37338,https://c1.neweggimages.com/productimage/nb300/AZBTS240523174XB8DF.jpg,2-pack photo
-APPLE-61W-ADAPTER-2M-C-C-CABLE,Apple 61W USB-C Power Adapter with 2 m USB-C Cable,missing,,,No match among the 20 Newegg listings visible on the seller page
-APPLE-EARPODS-LIGHTNING,Apple EarPods,missing,,,No match among the 20 Newegg listings visible on the seller page
-APPLE-EARPODS-TYPE-C,Apple EarPods,missing,,,No match among the 20 Newegg listings visible on the seller page
-APPLE-USB-A-L-2M,Apple USB-A to Lightning Cable,missing,,,No match among the 20 Newegg listings visible on the seller page
-APPLE-USB-C-C-1M,Apple USB-C Charge Cable,missing,,,No match among the 20 Newegg listings visible on the seller page
-APPLE-USB-C-C-2M,Apple USB-C Charge Cable,missing,,,No match among the 20 Newegg listings visible on the seller page
-APPLE-USB-C-L-2M,Apple USB-C to Lightning Cable,missing,,,No match among the 20 Newegg listings visible on the seller page
-APPLE-WATCH-USB-A,Apple Watch Charging Cable (USB-A),missing,,,No match among the 20 Newegg listings visible on the seller page
-APPLE5W-ADAPTER,Apple 5W USB Power Adapter,missing,,,No match among the 20 Newegg listings visible on the seller page
-SAM-35W-ADAPTER-DUO,Samsung 35W Duo Power Adapter,missing,,,No match among the 20 Newegg listings visible on the seller page
-SAM-65W-ADAPTER,Samsung 65W Power Adapter,missing,,,No match among the 20 Newegg listings visible on the seller page
-SAM-TA20-WHITE-15W,Samsung 15W Fast Wall Charger,missing,,,No match among the 20 Newegg listings visible on the seller page
-SAM-TYPE-C-AKG-BLACK,Samsung AKG USB-C Earphones,missing,,,No match among the 20 Newegg listings visible on the seller page
-SAM-USB-A-C-BLACK,Samsung USB-A to USB-C Cable,missing,,,No match among the 20 Newegg listings visible on the seller page
-SAM-USB-A-C-WHITE,Samsung USB-A to USB-C Cable,missing,,,No match among the 20 Newegg listings visible on the seller page
-SAM-USB-C-C-2M-BLACK,Samsung USB-C to USB-C Cable,missing,,,No match among the 20 Newegg listings visible on the seller page
-SAM-USB-C-C-2M-WHITE,Samsung USB-C to USB-C Cable,missing,,,No match among the 20 Newegg listings visible on the seller page
+2427650,Apple 61W USB-C Power Adapter with 2 m USB-C Cable,missing,,,No match among the 20 Newegg listings visible on the seller page
+24329106,Apple EarPods,missing,,,No match among the 20 Newegg listings visible on the seller page
+24330107,Apple EarPods,missing,,,No match among the 20 Newegg listings visible on the seller page
+2426337,Apple USB-A to Lightning Cable,missing,,,No match among the 20 Newegg listings visible on the seller page
+2428155,Apple USB-C Charge Cable,missing,,,No match among the 20 Newegg listings visible on the seller page
+24354153,Apple USB-C Charge Cable,missing,,,No match among the 20 Newegg listings visible on the seller page
+2427852,Apple USB-C to Lightning Cable,missing,,,No match among the 20 Newegg listings visible on the seller page
+24332121,Apple Watch Charging Cable (USB-A),missing,,,No match among the 20 Newegg listings visible on the seller page
+2428054,Apple 5W USB Power Adapter,missing,,,No match among the 20 Newegg listings visible on the seller page
+2431287,Samsung 35W Duo Power Adapter,missing,,,No match among the 20 Newegg listings visible on the seller page
+2430982,Samsung 65W Power Adapter,missing,,,No match among the 20 Newegg listings visible on the seller page
+2427347,Samsung 15W Fast Wall Charger,missing,,,No match among the 20 Newegg listings visible on the seller page
+2429467,Samsung AKG USB-C Earphones,missing,,,No match among the 20 Newegg listings visible on the seller page
+2428559,Samsung USB-A to USB-C Cable,missing,,,No match among the 20 Newegg listings visible on the seller page
+2426741,Samsung USB-A to USB-C Cable,missing,,,No match among the 20 Newegg listings visible on the seller page
+2430779,Samsung USB-C to USB-C Cable,missing,,,No match among the 20 Newegg listings visible on the seller page
+24487490,Samsung USB-C to USB-C Cable,missing,,,No match among the 20 Newegg listings visible on the seller page

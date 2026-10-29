@@ -6,7 +6,7 @@ import { supabase } from "../lib/supabase";
 type Tab = "overview" | "inventory" | "orders" | "sync";
 type VariantRow = { id: string; sku: string; attributes: Record<string, string>; price_cad: number; in_stock: boolean; product?: { id?: string; name: string; slug?: string } | { id?: string; name: string; slug?: string }[]; inventory?: { on_hand: number; reserved: number; marketplace_qty: number | null } | { on_hand: number; reserved: number; marketplace_qty: number | null }[] };
 type OrderRow = { id: string; email: string; status: string; total_cents: number; created_at: string; order_items?: { product_name: string; sku: string; quantity: number; unit_price_cents: number }[] };
-type StockRow = { variant_id: string; sku: string; on_hand: number; reserved: number; marketplace_qty: number | null; name: string };
+type StockRow = { variant_id: string; sku: string; on_hand: number; reserved: number; marketplace_qty: number | null; name: string; attributes: Record<string, string> };
 
 const flatten = <T,>(row: T | T[] | undefined): T | undefined => Array.isArray(row) ? row[0] : row;
 
@@ -60,22 +60,65 @@ const quantityHeaderAliases = new Set([
   "availablequantity", "sellablequantity", "count", "countedquantity",
 ]);
 const brandHeaderAliases = new Set(["brand", "productbrand", "manufacturer", "maker"]);
+const modelHeaderAliases = new Set(["brandmodel", "model", "productmodel", "devicemodel", "productname", "itemname"]);
+const colorHeaderAliases = new Set(["color", "colour", "devicecolor", "devicecolour"]);
+const conditionHeaderAliases = new Set(["condition", "grade", "devicecondition"]);
+const storageHeaderAliases = new Set(["storage", "capacity", "memory", "storagesize"]);
+const otherTableHeaderAliases = new Set([
+  "name", ...modelHeaderAliases, ...colorHeaderAliases, ...conditionHeaderAliases, ...storageHeaderAliases,
+]);
 
-type StockCsvColumns = { headerRowIndex: number; skuIndex: number; quantityIndex: number; brandIndex: number };
+type StockCsvColumns = {
+  headerRowIndex: number;
+  endRowIndex: number;
+  kind: "sku" | "product";
+  skuIndex: number;
+  quantityIndex: number;
+  brandIndex: number;
+  modelIndex: number;
+  colorIndex: number;
+  conditionIndex: number;
+  storageIndex: number;
+};
 type StockQuantity =
   | { status: "valid"; quantity: number; hasUnit: boolean }
   | { status: "blank" | "invalid" };
 
-function findStockCsvColumns(rows: string[][]): StockCsvColumns {
+function isStockTableHeader(row: string[]) {
+  const headers = row.map(normalizeCsvHeader);
+  const recognizedHeaders = headers.filter((header) =>
+    skuHeaderAliases.has(header) || quantityHeaderAliases.has(header) || brandHeaderAliases.has(header) || otherTableHeaderAliases.has(header),
+  ).length;
+  return recognizedHeaders >= 2 && headers.some((header) => skuHeaderAliases.has(header) || quantityHeaderAliases.has(header));
+}
+
+function findStockCsvColumns(rows: string[][]): StockCsvColumns[] {
+  const tables: StockCsvColumns[] = [];
   for (let headerRowIndex = 0; headerRowIndex < rows.length; headerRowIndex++) {
     const headers = rows[headerRowIndex].map(normalizeCsvHeader);
     const skuIndex = headers.findIndex((header) => skuHeaderAliases.has(header));
     const quantityIndex = headers.findIndex((header) => quantityHeaderAliases.has(header));
-    if (skuIndex >= 0 && quantityIndex >= 0) {
-      return { headerRowIndex, skuIndex, quantityIndex, brandIndex: headers.findIndex((header) => brandHeaderAliases.has(header)) };
-    }
+    const modelIndex = headers.findIndex((header) => modelHeaderAliases.has(header));
+    const colorIndex = headers.findIndex((header) => colorHeaderAliases.has(header));
+    if (quantityIndex < 0 || (skuIndex < 0 && (modelIndex < 0 || colorIndex < 0))) continue;
+    tables.push({
+      headerRowIndex,
+      endRowIndex: rows.length,
+      kind: skuIndex >= 0 ? "sku" : "product",
+      skuIndex,
+      quantityIndex,
+      brandIndex: headers.findIndex((header) => brandHeaderAliases.has(header)),
+      modelIndex,
+      colorIndex,
+      conditionIndex: headers.findIndex((header) => conditionHeaderAliases.has(header)),
+      storageIndex: headers.findIndex((header) => storageHeaderAliases.has(header)),
+    });
   }
-  throw new Error("CSV needs a SKU or Product SKU column and a Quantity, On-hand, Qty, Stock, or Available column.");
+  if (!tables.length) throw new Error("CSV needs a SKU or a product model and color, plus a Quantity or On-hand column.");
+  return tables.map((table) => {
+    const nextHeaderIndex = rows.findIndex((row, index) => index > table.headerRowIndex && isStockTableHeader(row));
+    return { ...table, endRowIndex: nextHeaderIndex < 0 ? rows.length : nextHeaderIndex };
+  });
 }
 
 function parseStockQuantity(value: string): StockQuantity {
@@ -89,9 +132,18 @@ function parseStockQuantity(value: string): StockQuantity {
     : { status: "invalid" };
 }
 
-type ResolvedStockCsvRow = { sku: string; quantity: StockQuantity; matched: boolean; offset: number };
+type ResolvedStockCsvRow = {
+  sku: string | null;
+  quantity: StockQuantity;
+  matched: boolean;
+  groupKey: string;
+  kind: "sku" | "product";
+  ambiguous: boolean;
+  offset?: number;
+};
 
 function resolveStockCsvRow(row: string[], columns: StockCsvColumns, knownSkus: Set<string>): ResolvedStockCsvRow | null {
+  if (columns.kind !== "sku") return null;
   const candidates: ResolvedStockCsvRow[] = [];
   const maxOffset = Math.min(8, Math.max(0, row.length - 1 - Math.max(columns.skuIndex, columns.quantityIndex)));
   for (let offset = 0; offset <= maxOffset; offset++) {
@@ -113,12 +165,53 @@ function resolveStockCsvRow(row: string[], columns: StockCsvColumns, knownSkus: 
         if (shiftedQuantity.status === "blank") break;
       }
     }
-    candidates.push({ sku, quantity, matched, offset });
+    candidates.push({ sku, quantity, matched, groupKey: `sku:${sku.toUpperCase()}`, kind: "sku", ambiguous: false, offset });
   }
 
   const quantityRank = (quantity: StockQuantity) => quantity.status === "valid" ? 2 : quantity.status === "blank" ? 1 : 0;
-  candidates.sort((a, b) => Number(b.matched) - Number(a.matched) || quantityRank(b.quantity) - quantityRank(a.quantity) || a.offset - b.offset);
+  candidates.sort((a, b) => Number(b.matched) - Number(a.matched) || quantityRank(b.quantity) - quantityRank(a.quantity) || (a.offset ?? 0) - (b.offset ?? 0));
   return candidates[0] ?? null;
+}
+
+const normalizeMatchValue = (value: string) => normalizeCsvHeader(value).replace(/gray/g, "grey");
+const normalizeProductModel = (value: string) => value
+  .normalize("NFKD")
+  .replace(/[\u0300-\u036f]/g, "")
+  .toLowerCase()
+  .replace(/^\s*(apple|samsung)\s+/, "")
+  .replace(/[^a-z0-9]+/g, " ")
+  .trim();
+
+function resolveProductStockCsvRow(row: string[], columns: StockCsvColumns, stocks: StockRow[]): ResolvedStockCsvRow | null {
+  if (columns.kind !== "product") return null;
+  const model = (row[columns.modelIndex] ?? "").trim();
+  const color = (row[columns.colorIndex] ?? "").trim();
+  if (!model || !color) return null;
+
+  const condition = columns.conditionIndex >= 0 ? (row[columns.conditionIndex] ?? "").trim() : "";
+  const storage = columns.storageIndex >= 0 ? (row[columns.storageIndex] ?? "").trim() : "";
+  const quantity = parseStockQuantity(row[columns.quantityIndex] ?? "");
+  const matches = stocks.filter((stock) => {
+    if (normalizeProductModel(stock.name) !== normalizeProductModel(model)) return false;
+    const attributes = stock.attributes ?? {};
+    const stockColor = attributes.Colour ?? attributes.Color ?? attributes.color ?? "";
+    if (!stockColor || normalizeMatchValue(stockColor) !== normalizeMatchValue(color)) return false;
+    const stockCondition = attributes.Condition ?? attributes.Grade ?? "";
+    if (condition && (!stockCondition || normalizeMatchValue(stockCondition) !== normalizeMatchValue(condition))) return false;
+    const stockStorage = attributes.Storage ?? attributes.Capacity ?? attributes.Memory ?? "";
+    if (storage && (!stockStorage || normalizeMatchValue(stockStorage) !== normalizeMatchValue(storage))) return false;
+    return true;
+  });
+  const identity = [normalizeProductModel(model), normalizeMatchValue(color), normalizeMatchValue(condition), normalizeMatchValue(storage)].join(":");
+  const sku = matches.length === 1 ? matches[0].sku : null;
+  return {
+    sku,
+    quantity,
+    matched: matches.length === 1,
+    groupKey: sku ? `sku:${sku.toUpperCase()}` : `product:${identity}`,
+    kind: "product",
+    ambiguous: matches.length > 1,
+  };
 }
 function downloadCsv(rows: string[][], name: string) {
   const csv = rows.map((row) => row.map((value) => `"${value.replaceAll('"', '""')}"`).join(",")).join("\r\n");
@@ -172,7 +265,7 @@ export function Admin() {
   const stocks = useMemo<StockRow[]>(() => variants.map((variant) => {
     const inventory = flatten(variant.inventory);
     const product = flatten(variant.product);
-    return { variant_id: variant.id, sku: variant.sku, on_hand: inventory?.on_hand ?? 0, reserved: inventory?.reserved ?? 0, marketplace_qty: inventory?.marketplace_qty ?? null, name: product?.name ?? "Product" };
+    return { variant_id: variant.id, sku: variant.sku, on_hand: inventory?.on_hand ?? 0, reserved: inventory?.reserved ?? 0, marketplace_qty: inventory?.marketplace_qty ?? null, name: product?.name ?? "Product", attributes: variant.attributes ?? {} };
   }), [variants]);
   const visibleStocks = stocks.filter((item) => `${item.name} ${item.sku}`.toLowerCase().includes(filter.toLowerCase()));
 
@@ -224,31 +317,40 @@ export function Admin() {
     try {
       const parsedRows = parseCsv(await file.text());
       const columns = findStockCsvColumns(parsedRows);
-      const dataRows = parsedRows.slice(columns.headerRowIndex + 1).filter((row) => row.some((cell) => cell.trim()));
-      if (!dataRows.length) throw new Error("This CSV has a header but no stock rows.");
+      const dataRows = columns.flatMap((table) =>
+        parsedRows.slice(table.headerRowIndex + 1, table.endRowIndex)
+          .filter((row) => row.some((cell) => cell.trim()))
+          .map((row) => ({ row, table })),
+      );
+      if (!dataRows.length) throw new Error("This CSV has stock headers but no stock rows.");
 
       const bySku = new Map(stocks.map((stock) => [stock.sku.toUpperCase(), stock]));
       const knownSkus = new Set(bySku.keys());
+      const catalogSkus = new Set(localCatalogProducts.flatMap((product) => product.variants.map((variant) => variant.sku.toUpperCase())));
       const resolvedRows: ResolvedStockCsvRow[] = [];
       let malformedRows = 0;
-      for (const row of dataRows) {
-        const resolved = resolveStockCsvRow(row, columns, knownSkus);
+      for (const { row, table } of dataRows) {
+        const resolved = table.kind === "sku"
+          ? resolveStockCsvRow(row, table, knownSkus)
+          : resolveProductStockCsvRow(row, table, stocks);
         if (resolved) resolvedRows.push(resolved);
         else malformedRows++;
       }
 
-      const sourceSkuCounts = new Map<string, number>();
-      for (const row of resolvedRows) sourceSkuCounts.set(row.sku.toUpperCase(), (sourceSkuCounts.get(row.sku.toUpperCase()) ?? 0) + 1);
-      const duplicateSkuGroups = [...sourceSkuCounts.values()].filter((count) => count > 1).length;
-      const duplicateRows = resolvedRows.filter((row) => (sourceSkuCounts.get(row.sku.toUpperCase()) ?? 0) > 1).length;
-      let blankQuantities = 0, invalidQuantities = 0, unmatchedSkus = 0, updated = 0;
+      const sourceKeyCounts = new Map<string, number>();
+      for (const row of resolvedRows) sourceKeyCounts.set(row.groupKey, (sourceKeyCounts.get(row.groupKey) ?? 0) + 1);
+      const duplicateGroups = [...sourceKeyCounts.values()].filter((count) => count > 1).length;
+      const duplicateRows = resolvedRows.filter((row) => (sourceKeyCounts.get(row.groupKey) ?? 0) > 1).length;
+      let blankQuantities = 0, invalidQuantities = 0, unmatchedSkus = 0, unmatchedProducts = 0, ambiguousProducts = 0, updated = 0;
 
       for (const row of resolvedRows) {
-        if ((sourceSkuCounts.get(row.sku.toUpperCase()) ?? 0) > 1) continue;
+        if ((sourceKeyCounts.get(row.groupKey) ?? 0) > 1) continue;
         if (row.quantity.status === "blank") { blankQuantities++; continue; }
         if (row.quantity.status !== "valid") { invalidQuantities++; continue; }
+        if (row.ambiguous) { ambiguousProducts++; continue; }
+        if (!row.sku) { if (row.kind === "product") unmatchedProducts++; else malformedRows++; continue; }
         const stock = bySku.get(row.sku.toUpperCase());
-        if (!stock) { unmatchedSkus++; continue; }
+        if (!stock) { if (row.kind === "product") unmatchedProducts++; else unmatchedSkus++; continue; }
         const values = {
           variant_id: stock.variant_id,
           on_hand: row.quantity.quantity,
@@ -261,7 +363,7 @@ export function Admin() {
 
       let syncError = "";
       if (marketplace) {
-        const recordsSkipped = malformedRows + duplicateRows + blankQuantities + invalidQuantities + unmatchedSkus;
+        const recordsSkipped = malformedRows + duplicateRows + blankQuantities + invalidQuantities + unmatchedSkus + unmatchedProducts + ambiguousProducts;
         const { error } = await supabase.from("marketplace_sync_runs").insert({
           source_name: file.name, records_seen: dataRows.length, records_updated: updated, records_skipped: recordsSkipped,
         });
@@ -270,11 +372,22 @@ export function Admin() {
       }
 
       const summary = [updated + " SKU" + (updated === 1 ? "" : "s") + " updated"];
-      if (duplicateSkuGroups) summary.push(duplicateSkuGroups + " duplicate SKU groups (" + duplicateRows + " rows) skipped");
+      if (duplicateGroups) summary.push(duplicateGroups + " duplicate item groups (" + duplicateRows + " rows) skipped");
       if (blankQuantities) summary.push(blankQuantities + " blank quantities skipped");
       if (invalidQuantities) summary.push(invalidQuantities + " invalid quantities skipped");
       if (unmatchedSkus) summary.push(unmatchedSkus + " unmatched SKUs skipped");
+      if (unmatchedProducts) summary.push(unmatchedProducts + " unmatched products skipped");
+      if (ambiguousProducts) summary.push(ambiguousProducts + " products matched multiple variants and were skipped");
       if (malformedRows) summary.push(malformedRows + " unreadable rows skipped");
+      const unmatchedCatalogSkus = resolvedRows.filter((row) =>
+        row.kind === "sku" && row.quantity.status === "valid" && row.sku !== null
+          && !bySku.has(row.sku.toUpperCase()) && catalogSkus.has(row.sku.toUpperCase()),
+      ).length;
+      if (unmatchedCatalogSkus > 0 && unmatchedCatalogSkus === unmatchedSkus) {
+        summary.push(stocks.length
+          ? "The accessory SKUs are in the local catalog but not the connected database. Apply supabase/migrations/202610290001_replace_catalog_skus.sql, then refresh."
+          : "The connected database has no live variants. Import the storefront catalog, then retry.");
+      }
       setMessage(summary.join(" · ") + (syncError ? " · Sync history could not be saved: " + syncError : ""));
       void loadData();
     } catch (error) { setMessage(error instanceof Error ? error.message : "Could not read this CSV."); }
@@ -313,9 +426,9 @@ export function Admin() {
   return <div className="admin-console"><header className="admin-topbar"><a className="wordmark" href="#/"><span className="wordmark__mark">mj.</span><span className="wordmark__name">MOBILE JOE<small>STORE ADMIN</small></span></a><div className="admin-top-actions"><span><span className="online-dot" />Store connected</span><button onClick={signOut}><LogOut size={15} /> Sign out</button></div></header><div className="admin-layout"><aside className="admin-sidebar"><div className="admin-welcome"><span className="admin-eyebrow">YOUR WORKSPACE</span><strong>Let’s get it done.</strong><small>{email || "Store team"}</small></div><nav>{tabs.map(([id, label, Icon]) => <button className={tab === id ? "current" : ""} onClick={() => setTab(id)} key={id}><Icon size={17} />{label}{id === "orders" && pendingOrders > 0 && <b>{pendingOrders}</b>}</button>)}</nav><div className="sidebar-footer"><ShieldCheck size={16} /><span>Secure admin session<br /><small>Only approved team members</small></span></div></aside><main className="admin-main"><div className="admin-page-title"><div><span className="admin-eyebrow">MOBILE JOE · OPERATIONS</span><h1>{tab === "overview" ? "Welcome to Mobile Joe." : tabs.find(([id]) => id === tab)?.[1]}</h1><p>{tab === "overview" ? "A quick look at how your store’s doing." : tab === "inventory" ? "Keep online stock accurate and up to date." : tab === "orders" ? "Recent orders and where they’re at." : "Keep your store stock lined up with marketplace listings."}</p></div><button className="admin-refresh" onClick={() => void loadData()}><RefreshCw size={15} /> Refresh</button></div>
       {message && <div className="admin-alert"><CircleAlert size={16} />{message}<button onClick={() => setMessage("")}>Dismiss</button></div>}
       {tab === "overview" && <><div className="admin-stat-grid"><Stat icon={<Boxes />} label="Sellable units" value={String(totalUnits)} detail="On hand, less reserved" /><Stat icon={<CircleAlert />} label="Low stock SKUs" value={String(lowStock)} detail="5 units or fewer" /><Stat icon={<ShoppingBag />} label="Paid to fulfill" value={String(pendingOrders)} detail="Awaiting dispatch" /><Stat icon={<RefreshCw />} label="Last stock sync" value={lastSync || "Not synced"} detail="Upload a marketplace CSV" /></div><div className="admin-work-grid"><div className="admin-panel"><div className="panel-title"><div><h2>What needs a look</h2><p>Little things to keep the store humming.</p></div></div><a className="admin-task" href="#/admin" onClick={(event) => { event.preventDefault(); setTab("orders"); }}><span className="task-icon task-icon--yellow"><PackageCheck /></span><span><b>{pendingOrders} paid {pendingOrders === 1 ? "order" : "orders"} to fulfill</b><small>Check order details and update their status.</small></span><ArrowLeft className="task-arrow" /></a><a className="admin-task" href="#/admin" onClick={(event) => { event.preventDefault(); setTab("sync"); }}><span className="task-icon"><RefreshCw /></span><span><b>Sync marketplace stock</b><small>Import a CSV export to update available quantities.</small></span><ArrowLeft className="task-arrow" /></a><a className="admin-task" href="#/admin" onClick={(event) => { event.preventDefault(); setTab("inventory"); }}><span className="task-icon"><ImagePlus /></span><span><b>Add product photos</b><small>Give customers a closer look at your products.</small></span><ArrowLeft className="task-arrow" /></a></div><div className="admin-panel"><div className="panel-title"><div><h2>Recent orders</h2><p>Your latest customer checkouts.</p></div><button className="panel-link" onClick={() => setTab("orders")}>View all <ArrowLeft size={14} /></button></div>{orders.slice(0, 4).length ? orders.slice(0, 4).map((order) => <OrderMini order={order} key={order.id} />) : <div className="admin-empty"><ShoppingBag /><p>Orders will show up here after your first checkout.</p></div>}</div></div><div className="admin-panel admin-catalog-panel"><div className="panel-title"><div><h2>Your products</h2><p>{variants.length} variants across the storefront.</p></div><button className="admin-secondary" onClick={() => void importCatalog()} disabled={busy}>{busy ? <LoaderCircle className="spin" /> : <Upload size={15} />} Import storefront catalog</button></div>{!variants.length && <div className="catalog-empty"><Store /><div><b>No live products in Supabase yet.</b><p>Import the local catalog, then add an inventory CSV to set accurate stock counts.</p></div></div>}</div></>}
-      {tab === "inventory" && <div className="admin-panel"><div className="inventory-tools"><input value={filter} onChange={(event) => setFilter(event.target.value)} placeholder="Search product or SKU" /><label className="admin-secondary upload-button"><Upload size={15} />Import stock CSV<input type="file" accept=".csv,text/csv" onChange={(event) => void uploadStockFile(event)} /></label><button className="admin-secondary" onClick={() => downloadCsv([["sku", "quantity"], ...stocks.map((stock) => [stock.sku, String(stock.on_hand)])], "mobile-joe-inventory.csv")}><ArrowDownToLine size={15} /> Export stock</button></div><small className="sync-footnote">CSV accepts SKU or Product SKU and Quantity, On-hand, Qty, Stock, or Available columns. Blank quantities, duplicate SKU groups, and unmatched SKUs are skipped.</small><div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Product / SKU</th><th>Price</th><th>Available now</th><th>Reserved</th><th>Set on-hand</th><th>Photo</th></tr></thead><tbody>{visibleStocks.map((stock) => { const variant = variants.find((item) => item.id === stock.variant_id)!; const productRow = flatten(variant.product); return <tr key={stock.variant_id}><td><b>{stock.name}</b><small>{stock.sku}{Object.values(variant.attributes ?? {}).length ? ` · ${Object.values(variant.attributes).join(" / ")}` : ""}</small></td><td>{money(Number(variant.price_cad))}</td><td><span className={stock.on_hand - stock.reserved > 0 ? "stock stock--in" : "stock"}><i />{Math.max(0, stock.on_hand - stock.reserved)}</span></td><td>{stock.reserved}</td><td><input className="stock-input" type="number" min="0" defaultValue={stock.on_hand} key={`${stock.variant_id}-${stock.on_hand}`} onBlur={(event) => { const value = Number(event.target.value); if (value !== stock.on_hand) void updateStock(stock, value); }} /></td><td>{productRow?.id ? <label className="photo-upload" title={`Add photo to ${stock.name}`}><ImagePlus size={16} /><input type="file" accept="image/*" onChange={(event) => productRow && void uploadImage(event, productRow as ProductSummary)} /></label> : "—"}</td></tr>; })}</tbody></table>{!visibleStocks.length && <div className="admin-empty"><Boxes /><p>Import the storefront catalog to start managing inventory.</p></div>}</div></div>}
+      {tab === "inventory" && <div className="admin-panel"><div className="inventory-tools"><input value={filter} onChange={(event) => setFilter(event.target.value)} placeholder="Search product or SKU" /><label className="admin-secondary upload-button"><Upload size={15} />Import stock CSV<input type="file" accept=".csv,text/csv" onChange={(event) => void uploadStockFile(event)} /></label><button className="admin-secondary" onClick={() => downloadCsv([["sku", "quantity"], ...stocks.map((stock) => [stock.sku, String(stock.on_hand)])], "mobile-joe-inventory.csv")}><ArrowDownToLine size={15} /> Export stock</button></div><small className="sync-footnote">CSV supports SKU + Quantity/On-hand rows and Model + Color + Quantity rows. Condition or Storage can disambiguate variants; duplicate, blank, unmatched, and ambiguous rows are skipped.</small><div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Product / SKU</th><th>Price</th><th>Available now</th><th>Reserved</th><th>Set on-hand</th><th>Photo</th></tr></thead><tbody>{visibleStocks.map((stock) => { const variant = variants.find((item) => item.id === stock.variant_id)!; const productRow = flatten(variant.product); return <tr key={stock.variant_id}><td><b>{stock.name}</b><small>{stock.sku}{Object.values(variant.attributes ?? {}).length ? ` · ${Object.values(variant.attributes).join(" / ")}` : ""}</small></td><td>{money(Number(variant.price_cad))}</td><td><span className={stock.on_hand - stock.reserved > 0 ? "stock stock--in" : "stock"}><i />{Math.max(0, stock.on_hand - stock.reserved)}</span></td><td>{stock.reserved}</td><td><input className="stock-input" type="number" min="0" defaultValue={stock.on_hand} key={`${stock.variant_id}-${stock.on_hand}`} onBlur={(event) => { const value = Number(event.target.value); if (value !== stock.on_hand) void updateStock(stock, value); }} /></td><td>{productRow?.id ? <label className="photo-upload" title={`Add photo to ${stock.name}`}><ImagePlus size={16} /><input type="file" accept="image/*" onChange={(event) => productRow && void uploadImage(event, productRow as ProductSummary)} /></label> : "—"}</td></tr>; })}</tbody></table>{!visibleStocks.length && <div className="admin-empty"><Boxes /><p>Import the storefront catalog to start managing inventory.</p></div>}</div></div>}
       {tab === "orders" && <div className="admin-panel"><div className="panel-title"><div><h2>Recent orders</h2><p>Stripe checkout orders · newest first</p></div><span className="order-count">{orders.length} shown</span></div>{orders.length ? <div className="orders-list">{orders.map((order) => <div className="order-card" key={order.id}><div className="order-card__head"><div><b>#{order.id.slice(0, 8).toUpperCase()}</b><small>{new Date(order.created_at).toLocaleString()} · {order.email}</small></div><span className={`order-status status--${order.status}`}>{order.status}</span></div><div className="order-lines">{order.order_items?.map((item) => <div key={item.sku}><span>{item.quantity} × {item.product_name}<small>{item.sku}</small></span><b>{money(item.unit_price_cents * item.quantity / 100)}</b></div>)}</div><div className="order-card__foot"><span>Total <b>{money(order.total_cents / 100)}</b></span>{order.status === "paid" && <button className="admin-secondary" onClick={() => void markFulfilled(order)}><Check size={15} /> Mark fulfilled</button>}</div></div>)}</div> : <div className="admin-empty"><ShoppingBag /><p>New orders will appear after the first Stripe checkout.</p></div>}</div>}
-      {tab === "sync" && <><div className="sync-banner"><span className="sync-banner-icon"><RefreshCw /></span><div><b>Stock in step, wherever it sells.</b><p>Import a marketplace CSV snapshot by SKU. Matched on-hand counts update your store availability; SKUs absent from the file stay as they are.</p></div></div><div className="sync-cards"><div className="sync-card"><span className="admin-eyebrow">01 · GET YOUR STORE STOCK</span><h2>Export online inventory.</h2><p>Download the current sellable quantities in a marketplace-friendly <code>sku,quantity</code> CSV.</p><button className="admin-secondary" onClick={() => downloadCsv([["sku", "quantity"], ...stocks.map((stock) => [stock.sku, String(Math.max(0, stock.on_hand - stock.reserved))])], "mobile-joe-marketplace-stock.csv")}><ArrowDownToLine size={15} /> Download stock CSV</button></div><div className="sync-card sync-card--yellow"><span className="admin-eyebrow">02 · UPDATE FROM A MARKETPLACE</span><h2>Import a stock snapshot.</h2><p>Upload a CSV with SKU or Product SKU and Quantity, On-hand, Qty, Stock, or Available columns. Extra columns are ignored; unmatched and duplicate SKUs are skipped.</p><label className="admin-secondary upload-button"><ArrowUpFromLine size={15} />Choose marketplace CSV<input type="file" accept=".csv,text/csv" onChange={(event) => void uploadStockFile(event, true)} /></label></div></div><div className="admin-panel sync-preview"><div className="panel-title"><div><h2>Marketplace comparison</h2><p>Sellable store quantity compared with your most recent imported marketplace quantities.</p></div></div><div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>SKU</th><th>Store sellable</th><th>Marketplace snapshot</th><th>Difference</th></tr></thead><tbody>{stocks.filter((stock) => stock.marketplace_qty !== null).map((stock) => <tr key={stock.variant_id}><td><b>{stock.sku}</b><small>{stock.name}</small></td><td>{stock.on_hand}</td><td>{stock.marketplace_qty}</td><td><span className={Math.max(0, stock.on_hand - stock.reserved) === stock.marketplace_qty ? "sync-match" : "sync-difference"}>{Math.max(0, stock.on_hand - stock.reserved) === stock.marketplace_qty ? "In sync" : `${Math.max(0, stock.on_hand - stock.reserved) - (stock.marketplace_qty ?? 0) > 0 ? "+" : ""}${Math.max(0, stock.on_hand - stock.reserved) - (stock.marketplace_qty ?? 0)}`}</span></td></tr>)}</tbody></table>{!stocks.some((stock) => stock.marketplace_qty !== null) && <div className="admin-empty"><RefreshCw /><p>Import a marketplace file to see the comparison.</p></div>}</div><small className="sync-footnote"><Clock3 size={13} />{lastSync ? `Last imported ${lastSync}` : "No marketplace snapshots imported yet."} · Direct marketplace API connections need provider credentials.</small></div></>}
+      {tab === "sync" && <><div className="sync-banner"><span className="sync-banner-icon"><RefreshCw /></span><div><b>Stock in step, wherever it sells.</b><p>Import a marketplace CSV by SKU or by model, color, and condition. Matched on-hand counts update your store; unmatched or ambiguous rows stay unchanged.</p></div></div><div className="sync-cards"><div className="sync-card"><span className="admin-eyebrow">01 · GET YOUR STORE STOCK</span><h2>Export online inventory.</h2><p>Download the current sellable quantities in a marketplace-friendly <code>sku,quantity</code> CSV.</p><button className="admin-secondary" onClick={() => downloadCsv([["sku", "quantity"], ...stocks.map((stock) => [stock.sku, String(Math.max(0, stock.on_hand - stock.reserved))])], "mobile-joe-marketplace-stock.csv")}><ArrowDownToLine size={15} /> Download stock CSV</button></div><div className="sync-card sync-card--yellow"><span className="admin-eyebrow">02 · UPDATE FROM A MARKETPLACE</span><h2>Import a stock snapshot.</h2><p>Upload SKU and quantity rows, or product model, color, quantity, and optional condition/storage columns. Extra columns are ignored; unmatched and ambiguous items are skipped.</p><label className="admin-secondary upload-button"><ArrowUpFromLine size={15} />Choose marketplace CSV<input type="file" accept=".csv,text/csv" onChange={(event) => void uploadStockFile(event, true)} /></label></div></div><div className="admin-panel sync-preview"><div className="panel-title"><div><h2>Marketplace comparison</h2><p>Sellable store quantity compared with your most recent imported marketplace quantities.</p></div></div><div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>SKU</th><th>Store sellable</th><th>Marketplace snapshot</th><th>Difference</th></tr></thead><tbody>{stocks.filter((stock) => stock.marketplace_qty !== null).map((stock) => <tr key={stock.variant_id}><td><b>{stock.sku}</b><small>{stock.name}</small></td><td>{stock.on_hand}</td><td>{stock.marketplace_qty}</td><td><span className={Math.max(0, stock.on_hand - stock.reserved) === stock.marketplace_qty ? "sync-match" : "sync-difference"}>{Math.max(0, stock.on_hand - stock.reserved) === stock.marketplace_qty ? "In sync" : `${Math.max(0, stock.on_hand - stock.reserved) - (stock.marketplace_qty ?? 0) > 0 ? "+" : ""}${Math.max(0, stock.on_hand - stock.reserved) - (stock.marketplace_qty ?? 0)}`}</span></td></tr>)}</tbody></table>{!stocks.some((stock) => stock.marketplace_qty !== null) && <div className="admin-empty"><RefreshCw /><p>Import a marketplace file to see the comparison.</p></div>}</div><small className="sync-footnote"><Clock3 size={13} />{lastSync ? `Last imported ${lastSync}` : "No marketplace snapshots imported yet."} · Direct marketplace API connections need provider credentials.</small></div></>}
       </main></div></div>;
 }
 
