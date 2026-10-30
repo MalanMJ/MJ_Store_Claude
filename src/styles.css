@@ -105,3 +105,5 @@
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
 
 .marketplace-gauge{position:relative;color:inherit;text-decoration:none}.marketplace-gauge:focus-visible{outline:2px solid var(--ink);outline-offset:3px}.marketplace-gauge__external-icon{position:absolute;top:10px;right:10px;color:var(--muted)}.marketplace-gauge:hover .marketplace-gauge__external-icon{color:var(--ink)}
+
+.admin-topbar .wordmark__logo{width:150px;height:auto}.admin-wordmark{gap:11px}.admin-wordmark-label{padding-left:11px;border-left:1px solid #e7e6df;font:7px/1 var(--mono);letter-spacing:.1em;color:#77766c;white-space:nowrap}@media(max-width:620px){.admin-topbar .wordmark__logo{width:130px}.admin-wordmark{gap:8px}.admin-wordmark-label{padding-left:8px;font-size:6px}}

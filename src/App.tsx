@@ -6,8 +6,8 @@ import {
 } from "lucide-react";
 import { Admin } from "./components/Admin";
 import homeHero from "../images/hero-warehouse.jpg";
-import mobileJoeLogo from "../images/mobile-joe-logo.svg";
-import mobileJoeFooterLogo from "../images/mobile-joe-logo-footer.svg";
+import mobileJoeLogoLight from "../images/mobile-joe-logo-light.png";
+import mobileJoeLogoDark from "../images/mobile-joe-logo-dark.png";
 import teamworkImage from "../images/about-teamwork.avif";
 import { categoryLabels, loadCatalog, localCatalogProducts, money, type Product, type Variant } from "./lib/catalog";
 import { hasBackend, supabase } from "./lib/supabase";
@@ -171,7 +171,7 @@ function App() {
       <div className="announcement"><span>Good gear, fair prices, Canada wide.</span><a href="#/about">Meet Mobile Joe <ArrowRight size={13} /></a></div>
       <header className="site-header">
         <button className="mobile-menu-button icon-button" aria-label="Open menu" onClick={() => setMobileMenu(!mobileMenu)}>{mobileMenu ? <X /> : <Menu />}</button>
-        <a href="#/" className="wordmark" aria-label="Mobile Joe home"><img className="wordmark__logo" src={mobileJoeLogo} alt="Mobile Joe" /></a>
+        <a href="#/" className="wordmark" aria-label="Mobile Joe home"><img className="wordmark__logo" src={mobileJoeLogoLight} alt="Mobile Joe" /></a>
         <nav className={`main-nav ${mobileMenu ? "main-nav--open" : ""}`} aria-label="Main navigation">
           <a href="#/shop/all" className={parsedRoute.startsWith("/shop") ? "active" : ""}>Shop all</a>
           <div className="nav-categories"><button onClick={() => setMobileMenu(!mobileMenu)}>Accessories <ChevronDown size={14} /></button><div className="category-popover">{categoryList.map(([slug, label]) => <a href={`#/shop/${slug}`} key={slug}>{label}<ChevronRight size={14} /></a>)}</div></div>
@@ -244,7 +244,7 @@ function About() {
 }
 
 function Footer() {
-  return <footer className="site-footer"><div className="wrap footer-top"><a href="#/" className="wordmark" aria-label="Mobile Joe home"><img className="wordmark__logo" src={mobileJoeFooterLogo} alt="Mobile Joe" /></a><p>Good gear. Fair prices.<br />Real help from Mobile Joe.</p><div className="footer-links"><div><b>THE SHOP</b><a href="#/shop/all">Shop everything</a><a href="#/shop/chargers">Chargers</a><a href="#/shop/cables">Cables</a><a href="#/shop/earphones">Earphones</a></div><div><b>HERE TO HELP</b><a href="#/about">About Mobile Joe</a><a href="mailto:hello@mobilejoe.ca">Email Mobile Joe</a><a href="#/about">Shipping & returns</a><a href="#/admin">Team sign in</a></div></div></div><div className="wrap footer-bottom"><span>© {new Date().getFullYear()} Mobile Joe. Made for Canada.</span><span>Prices in CAD <span className="footer-heart">♥</span> Canada-wide shipping</span></div></footer>;
+  return <footer className="site-footer"><div className="wrap footer-top"><a href="#/" className="wordmark" aria-label="Mobile Joe home"><img className="wordmark__logo" src={mobileJoeLogoDark} alt="Mobile Joe" /></a><p>Good gear. Fair prices.<br />Real help from Mobile Joe.</p><div className="footer-links"><div><b>THE SHOP</b><a href="#/shop/all">Shop everything</a><a href="#/shop/chargers">Chargers</a><a href="#/shop/cables">Cables</a><a href="#/shop/earphones">Earphones</a></div><div><b>HERE TO HELP</b><a href="#/about">About Mobile Joe</a><a href="mailto:hello@mobilejoe.ca">Email Mobile Joe</a><a href="#/about">Shipping & returns</a><a href="#/admin">Team sign in</a></div></div></div><div className="wrap footer-bottom"><span>© {new Date().getFullYear()} Mobile Joe. Made for Canada.</span><span>Prices in CAD <span className="footer-heart">♥</span> Canada-wide shipping</span></div></footer>;
 }
 
 export default App;
